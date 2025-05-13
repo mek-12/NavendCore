@@ -8,8 +8,8 @@ public class CommandSender : ICommandSender {
         _serviceProvider = serviceProvider;
     }
 
-    public async Task SendAsync<TCommand>(TCommand command) where TCommand : ICommand {
+    public async Task<CommandResponse> SendAsync<TCommand>(TCommand command) where TCommand : ICommand {
         var handler = _serviceProvider.GetRequiredService<ICommandHandler<TCommand>>();
-        await handler.HandleAsync(command);
+        return await handler.HandleAsync(command);
     }
 }
