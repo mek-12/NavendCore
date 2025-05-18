@@ -1,21 +1,21 @@
-# Yerel (Local) NuGet Kaynağı Tanımlama ve Paket Ekleme
+# Defining a Local NuGet Source and Adding a Package
 
-Yeni bir sürüme geçmek ve güncel bir NuGet paketi oluşturmak istiyorsanız, `.sln` dosyasındaki sürüm numarasını artırıp aşağıdaki komutu çalıştırabilirsiniz:
+If you want to upgrade to a new version and create an updated NuGet package, first increase the version number in your `.sln` file and run the following command:
 
 ```bash
 dotnet build -c Release
 ```
 
-Eğer daha önce yerel NuGet kaynağı tanımlamadıysanız, önce `nuget-local` adında bir kaynak oluşturalım:
+If you haven't defined a local NuGet source before, add it using the command below:
 
 ```bash
 dotnet nuget add source ~/.nuget/nuget-local --name Local
 ```
 
-Sonrasında oluşturduğunuz NuGet paketini bu kaynağa kopyalayın:
+Then copy the generated NuGet package to the local source:
 
 ```bash
 cp ./Navend.Core/bin/Release/*.nupkg ~/.nuget/nuget-local/
 ```
 
-Artık `Navend.Core` paketinin bu yeni sürümünü, projelerinize yerel bir kaynak olarak ekleyip kullanabilirsiniz.
+Now you can use the new version of the `Navend.Core` package as a local reference in your projects.
