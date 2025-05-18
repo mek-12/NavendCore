@@ -1,6 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using System.IO.Pipes;
-using System.Runtime.ConstrainedExecution;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Navend.Core.CQRS;
@@ -25,6 +22,7 @@ public static class DIExtension {
         }
         services.AddScoped(serviceProvider => {
             serviceProvider.GetRequiredService(typeService);
+            return serviceProvider;
         });
         return services;
     }
