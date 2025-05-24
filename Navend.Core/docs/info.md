@@ -19,3 +19,9 @@ cp ./Navend.Core/bin/Release/*.nupkg ~/.nuget/nuget-local/
 ```
 
 Now you can use the new version of the `Navend.Core` package as a local reference in your projects.
+
+# Publish to Nuget.Org
+
+dotnet build -c Release
+
+dotnet nuget push bin/Release/Navend.Core.<version>.nupkg --api-key <api_key> --source https://api.nuget.org/v3/index.json

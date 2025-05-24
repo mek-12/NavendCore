@@ -4,14 +4,22 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageId>Navend.Core</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.0-alpha.1</Version>
     <Authors>Muhammed Emin Karaboğa</Authors>
     <Company>Ahura Mazda</Company>
     <Description>Utils for EF Core and CQRS</Description>
-    <PackageTags>efcore;uow;repository</PackageTags>
+    <PackageTags>efcore;uow;repository;cqrs</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Nullable>enable</Nullable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
+
+  <!-- LICENSE ve README'yi paketle -->
+  <ItemGroup>
+    <None Include="../LICENSE" Pack="true" PackagePath="" />
+    <None Include="../README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
