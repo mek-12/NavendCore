@@ -5,6 +5,7 @@ namespace Navend.Core.Data;
 public interface IRepository<TEntity, in TKey>: IRepository where TEntity: class, IEntity<TKey> {
     Task<TEntity?> GetAsync(TKey id);
     Task<TEntity?> GetAsync(Expression<Func<TEntity, bool>> predicate);
+    Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null);
     Task AddAsync(TEntity entity);
     Task AddRangeAsync(List<TEntity> entities);
     Task UpdateAsync(TEntity entity);

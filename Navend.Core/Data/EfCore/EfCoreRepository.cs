@@ -81,4 +81,9 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
             _ => throw new ArgumentException("Invalid property expression")
         };
     }
+
+    public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null)
+    {
+        return  await dbSet.ToListAsync();
+    }
 }

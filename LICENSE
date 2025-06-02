@@ -2,12 +2,21 @@ PolyForm Noncommercial License 1.0.0
 
 Copyright (c) 2025 Muhammed Emin KARABOĞA
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use the Software for personal, academic, or non-commercial purposes, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to use the Software solely for personal, academic, or other noncommercial purposes, subject to the following conditions:
 
-1. Noncommercial Use Only. You may not use the Software for any commercial purposes. This includes, but is not limited to, selling, licensing, or distributing the Software as part of a commercial product or service, using the Software to provide services to others for a fee, or using the Software to develop or operate a business.
+1. **Noncommercial Use Only.** You may not use the Software for any commercial purposes. This includes, but is not limited to:
+   - Selling or licensing the Software, or any derivative work.
+   - Including the Software as part of a commercial offering.
+   - Using the Software to provide paid services to third parties.
+   - Using the Software in any product, platform, or system that is used to generate revenue.
 
-2. No Warranty. THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND.
+2. **Redistribution and Modification.** You may copy, modify, and distribute the Software, provided that:
+   - This license file is included with all copies or substantial portions of the Software.
+   - The modified software is also only used for noncommercial purposes.
+   - Any violation of these conditions immediately terminates your rights under this license.
 
-3. Other Conditions. You may copy and modify the Software, but you must retain this license in any distribution or modification. Any use that violates the terms above automatically terminates your rights under this license.
+3. **No Warranty.** THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
 
-For full license text, visit https://polyformproject.org/licenses/noncommercial/1.0.0/
+For full license details, please see: https://polyformproject.org/licenses/noncommercial/1.0.0/
+
+Contact for commercial licensing: mek-12@outlook.com
