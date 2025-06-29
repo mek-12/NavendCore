@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Navend.Core.Attributes;
 using Navend.Core.CQRS;
 using Navend.Core.Data.EfCore;
-using Navend.Core.Decorator.Helper;
 using Navend.Core.UOW;
 using Navend.Core.UOW.Decorator;
 
@@ -17,56 +16,63 @@ public static class DIExtension
         var connectionString = configuration.GetSection("ConnectionStrings")["DefaultConnection"];
         services.AddDbContext<TContext>(options => options.UseSqlServer(connectionString));
         services.AddScoped<IUnitOfWork, EfCoreUnitOfWork<TContext>>();
-        services.AddDecorator(typeof(ICommandHandler<>),typeof(CommandHandlerDecorator<>));
+        services.AddOpenGenericDecorator(typeof(ICommandHandler<>), typeof(CommandHandlerDecorator<>));
         return services;
     }
 
-    public static IServiceCollection AddDecorator(this IServiceCollection services, Type closedInterfaceType, Type decoratorType)
+    public static IServiceCollection AddOpenGenericDecorator(
+        this IServiceCollection services,
+        Type openInterfaceType,
+        Type openDecoratorType)
     {
-        if (closedInterfaceType == null)
-            throw new ArgumentNullException(nameof(closedInterfaceType));
+        if (!openInterfaceType.IsGenericTypeDefinition)
+            throw new ArgumentException("openInterfaceType must be a generic type definition");
 
-        if (decoratorType == null)
-            throw new ArgumentNullException(nameof(decoratorType));
+        if (!openDecoratorType.IsGenericTypeDefinition)
+            throw new ArgumentException("openDecoratorType must be a generic type definition");
 
-        if (!closedInterfaceType.IsInterface || !closedInterfaceType.IsGenericType)
-            throw new ArgumentException("Only closed generic interfaces are supported.", nameof(closedInterfaceType));
+        if (!openDecoratorType.GetCustomAttributes(typeof(DecoratorAttribute), true).Any())
+            throw new InvalidOperationException($"{openDecoratorType.Name} must be annotated with [Decorator] attribute.");
 
-        if (!decoratorType.GetCustomAttributes(typeof(DecoratorAttribute), true).Any())
-            throw new InvalidOperationException($"{decoratorType.Name} must be annotated with [Decorator] attribute.");
+        // Tüm assembly'leri tara
+        var allTypes = AppDomain.CurrentDomain.GetAssemblies()
+            .SelectMany(x =>
+            {
+                try { return x.GetTypes(); }
+                catch { return Array.Empty<Type>(); } // ReflectionTypeLoadException koruması
+            })
+            .ToList();
 
-        var interfaceTypeDef = closedInterfaceType.GetGenericTypeDefinition();
-        var typeArguments = closedInterfaceType.GetGenericArguments();
+        // Interface'i implement eden, decorator olmayan handler'ları bul
+        var handlerTypes = allTypes
+            .Where(t => t.IsClass && !t.IsAbstract)
+            .Where(t => t.GetInterfaces()
+                .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == openInterfaceType))
+            .Where(t => !t.GetCustomAttributes(typeof(DecoratorAttribute), true).Any())
+            .ToList();
 
-        var assembly = decoratorType.Assembly;
+        if (!handlerTypes.Any())
+            return services; // Hiç handler yoksa çık
 
-        var handlerType = assembly.GetTypes()
-            .FirstOrDefault(t =>
-                t.IsClass &&
-                !t.IsAbstract &&
-                t.GetInterfaces().Any(i =>
-                    i.IsGenericType &&
-                    i.GetGenericTypeDefinition() == interfaceTypeDef) &&
-                !t.GetCustomAttributes(typeof(DecoratorAttribute), true).Any());
-
-        if (handlerType == null)
+        foreach (var handlerType in handlerTypes)
         {
-            throw new InvalidOperationException(
-                $"No non-decorator class found that implements {interfaceTypeDef.Name} in assembly {assembly.GetName().Name}.");
+            // Handler hangi interface'i uyguluyor (kapalı haliyle)?
+            var interfaceType = handlerType.GetInterfaces()
+                .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == openInterfaceType);
+
+            var genericArguments = interfaceType.GetGenericArguments();
+            var closedDecoratorType = openDecoratorType.MakeGenericType(genericArguments);
+
+            // 1️⃣ Önce gerçek handler'ı kaydet
+            services.AddScoped(handlerType);
+
+            // 2️⃣ Decorator'ı interface'e kaydet
+            services.AddScoped(interfaceType, sp =>
+            {
+                var inner = sp.GetRequiredService(handlerType);
+                return ActivatorUtilities.CreateInstance(sp, closedDecoratorType, inner);
+            });
         }
-
-        var closedHandlerType = handlerType.IsGenericType
-            ? handlerType.MakeGenericType(typeArguments)
-            : handlerType;
-
-        var closedDecoratorType = decoratorType.MakeGenericType(typeArguments);
-
-        services.AddScoped(closedHandlerType);
-        services.AddScoped(closedInterfaceType, sp =>
-        {
-            var inner = sp.GetRequiredService(closedHandlerType);
-            return ActivatorUtilities.CreateInstance(sp, closedDecoratorType, inner);
-        });
 
         return services;
     }
