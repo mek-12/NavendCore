@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Navend.Core.Attributes;
 using Navend.Core.CQRS;
 using Navend.Core.Data.EfCore;
+using Navend.Core.Step;
 using Navend.Core.UOW;
 using Navend.Core.UOW.Decorator;
 
@@ -17,6 +18,7 @@ public static class DIExtension
         services.AddDbContext<TContext>(options => options.UseSqlServer(connectionString));
         services.AddScoped<IUnitOfWork, EfCoreUnitOfWork<TContext>>();
         services.AddOpenGenericDecorator(typeof(ICommandHandler<>), typeof(CommandHandlerDecorator<>));
+        services.AddSteps();
         return services;
     }
 
