@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Navend.Core.Step.Abstract;
 using Navend.Core.Step.Concrete;
 
@@ -10,16 +11,18 @@ public static class Extensions
     public static IServiceCollection AddSteps(this IServiceCollection services)
     {
         var stepInterfaceType = typeof(IStep<>);
-        var baseContextType = typeof(StepContext);
+        var stepContextBaseType = typeof(StepContext);
 
-        var executingAssembly = Assembly.GetExecutingAssembly();
-        var fullName = executingAssembly.FullName;
+        var executingAssembly = Assembly.GetEntryAssembly();
+        var fullName = executingAssembly?.FullName;
         if (string.IsNullOrEmpty(fullName)) return services;
+
         string rootNamespace = fullName.Split(',')[0].Split('.')[0];
+
         var assemblies = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic &&
                         !string.IsNullOrEmpty(a.FullName) &&
-                        !a.FullName.StartsWith(rootNamespace))
+                        a.FullName.StartsWith(rootNamespace))
             .ToList();
 
         foreach (var assembly in assemblies)
@@ -31,27 +34,33 @@ public static class Extensions
             }
             catch (ReflectionTypeLoadException ex)
             {
-                Console.Write(ex.ToString());
+                Console.WriteLine(ex.ToString());
             }
 
-            // IStep<TContext> türünden interface’leri bul
-            var stepInterfaces = types
-                .Where(t => t.IsInterface && t.IsGenericType)
-                .Where(t => t.GetInterfaces().Any(i =>
-                    i.IsGenericType &&
-                    i.GetGenericTypeDefinition() == stepInterfaceType))
-                .Where(t => baseContextType.IsAssignableFrom(t.GetGenericArguments().First()))
+            var stepTypes = types
+                .Where(t => !t.IsAbstract && !t.IsInterface)
+                .SelectMany(t =>
+                    t.GetInterfaces()
+                        .Where(i => i.IsGenericType &&
+                                    i.GetGenericTypeDefinition() == stepInterfaceType &&
+                                    stepContextBaseType.IsAssignableFrom(i.GetGenericArguments()[0])) // T : StepContext
+                        .Select(i => new { Service = i, Implementation = t }))
                 .ToList();
-
-            foreach (var stepInterface in stepInterfaces)
+            if (stepTypes != null && stepTypes.Any())
             {
-                var implementations = types
-                    .Where(t => t.IsClass && !t.IsAbstract && stepInterface.IsAssignableFrom(t))
+                // StepContext registration
+                var contextTypes = types
+                    .Where(t => stepContextBaseType.IsAssignableFrom(t) && t != stepContextBaseType)
                     .ToList();
 
-                foreach (var impl in implementations)
+                foreach (var contextType in contextTypes)
                 {
-                    services.AddScoped(stepInterface, impl);
+                    services.AddScoped(stepContextBaseType, contextType); // Add base context interface if used
+                    services.AddScoped(contextType, contextType);         // Add itself
+                }
+                foreach (var pair in stepTypes)
+                {
+                    services.AddScoped(pair.Service, pair.Implementation);
                 }
             }
         }
