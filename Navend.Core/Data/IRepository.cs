@@ -10,6 +10,7 @@ public interface IRepository<TEntity, in TKey>: IRepository where TEntity: class
     Task AddRangeAsync(List<TEntity> entities);
     Task UpdateAsync(TEntity entity);
     Task UpdateRangeAsync(IEnumerable<TEntity> entities);
+    Task UpsertRangeAsync(List<TEntity> entities);
     Task UpdatePartialAsync(TKey id, Expression<Func<TEntity, object>> propertySelector, object newValue);
     Task DeleteAsync(TEntity entity);
     Task DeleteRangeAsync(Expression<Func<TEntity, bool>> predicate);
