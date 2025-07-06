@@ -2,7 +2,8 @@ using System.Linq.Expressions;
 
 namespace Navend.Core.Data;
 
-public interface IRepository<TEntity, in TKey>: IRepository where TEntity: class, IEntity<TKey> {
+public interface IRepository<TEntity, in TKey>: IRepository where TEntity: class, IEntity<TKey> 
+{
     Task<TEntity?> GetAsync(TKey id);
     Task<TEntity?> GetAsync(Expression<Func<TEntity, bool>> predicate);
     Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null);
@@ -10,6 +11,7 @@ public interface IRepository<TEntity, in TKey>: IRepository where TEntity: class
     Task AddRangeAsync(List<TEntity> entities);
     Task UpdateAsync(TEntity entity);
     Task UpdateRangeAsync(IEnumerable<TEntity> entities);
+    Task UpsertRangeAsync(List<TEntity> entities);
     Task UpdatePartialAsync(TKey id, Expression<Func<TEntity, object>> propertySelector, object newValue);
     Task DeleteAsync(TEntity entity);
     Task DeleteRangeAsync(Expression<Func<TEntity, bool>> predicate);

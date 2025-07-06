@@ -66,6 +66,30 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task UpsertRangeAsync(List<TEntity> entities)
+    {
+        if (entities == null || entities.Count == 0)
+            return;
+
+        var ids = entities.Select(e => e.Id).ToList();
+
+        var existingIds = await dbSet
+            .Where(e => ids.Contains(e.Id))
+            .Select(e => e.Id)
+            .ToListAsync();
+
+        var existingIdSet = new HashSet<TKey>(existingIds);
+
+        var toAdd = entities.Where(e => !existingIdSet.Contains(e.Id)).ToList();
+        var toUpdate = entities.Where(e => existingIdSet.Contains(e.Id)).ToList();
+
+        if (toAdd.Count > 0)
+            await AddRangeAsync(toAdd);
+
+        if (toUpdate.Count > 0)
+            await UpdateRangeAsync(toUpdate);
+    }
+
     public async Task UpdateRangeAsync(IEnumerable<TEntity> entities)
     {
         foreach (var entity in entities)
