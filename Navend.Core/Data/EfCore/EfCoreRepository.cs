@@ -130,4 +130,14 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
     {
         return await dbSet.ToListAsync();
     }
+
+    public async Task<List<TResult>> SelectAsync<TResult>(Expression<Func<TEntity, bool>>? predicate, Expression<Func<TEntity, TResult>> selector)
+    {
+        IQueryable<TEntity> query = dbSet;
+
+        if (predicate != null)
+            query = query.Where(predicate);
+
+        return await query.Select(selector).ToListAsync();
+    }
 }
