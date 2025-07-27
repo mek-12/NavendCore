@@ -140,9 +140,9 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
     }
 
 
-    public async Task<List<TResult>> SelectAsync<TResult>(Expression<Func<TEntity, bool>>? predicate, Expression<Func<TEntity, TResult>> selector)
+    public async Task<List<TResult>> SelectAsync<TResult>(Expression<Func<TEntity, bool>>? predicate, Expression<Func<TEntity, TResult>> selector, bool asNoTracking = false)
     {
-        IQueryable<TEntity> query = dbSet;
+        IQueryable<TEntity> query = AsQueryable(asNoTracking);
 
         if (predicate != null)
             query = query.Where(predicate);

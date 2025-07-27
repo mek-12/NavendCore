@@ -18,7 +18,7 @@ public interface IRepository<TEntity, in TKey> : IRepository where TEntity : cla
     Task DeleteRangeAsync(Expression<Func<TEntity, bool>> predicate);
     Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate);
     IQueryable<TEntity> AsQueryable(bool asNoTracking = false);
-    Task<List<TResult>> SelectAsync<TResult>(Expression<Func<TEntity, bool>>? predicate, Expression<Func<TEntity, TResult>> selector);
+    Task<List<TResult>> SelectAsync<TResult>(Expression<Func<TEntity, bool>>? predicate, Expression<Func<TEntity, TResult>> selector, bool asNoTracking = false);
     Task BulkInsertAsync(ConcurrentBag<TEntity> entities, int batchSize = 1000, bool clearTracker = true, CancellationToken cancellationToken = default);
 }
 
