@@ -27,9 +27,10 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
             await dbContext.SaveChangesAsync();
     }
 
-    public IQueryable<TEntity> AsQueryable()
+    public IQueryable<TEntity> AsQueryable(bool asNoTracking = false)
     {
-        return dbSet.AsQueryable();
+        var query = dbSet.AsQueryable();
+        return asNoTracking ? query.AsNoTracking() : query;
     }
 
     public async Task DeleteAsync(TEntity entity)
@@ -58,7 +59,7 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
 
     public async Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate)
     {
-        return await dbSet.CountAsync(predicate);
+        return await AsQueryable(true).CountAsync(predicate);
     }
 
     public async Task UpdateAsync(TEntity entity)
@@ -75,11 +76,10 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
 
         var ids = entities.Select(e => e.Id).ToList();
 
-        var existingIds = await dbSet
-            .AsNoTracking()
-            .Where(e => ids.Contains(e.Id))
-            .Select(e => e.Id)
-            .ToListAsync();
+        var existingIds = await AsQueryable(true)
+                               .Where(e => ids.Contains(e.Id))
+                               .Select(e => e.Id)
+                               .ToListAsync();
 
         var existingIdSet = new HashSet<TKey>(existingIds);
 
@@ -131,10 +131,7 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
 
     public async Task<List<TEntity>> GetAllAsync( Expression<Func<TEntity, bool>>? predicate = null, bool asNoTracking = false)
     {
-        IQueryable<TEntity> query = dbSet;
-
-        if (asNoTracking)
-            query = query.AsNoTracking();
+        IQueryable<TEntity> query = AsQueryable(asNoTracking);
 
         if (predicate != null)
             query = query.Where(predicate);
