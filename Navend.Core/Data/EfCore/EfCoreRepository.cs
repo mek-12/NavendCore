@@ -76,6 +76,7 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
         var ids = entities.Select(e => e.Id).ToList();
 
         var existingIds = await dbSet
+            .AsNoTracking()
             .Where(e => ids.Contains(e.Id))
             .Select(e => e.Id)
             .ToListAsync();
@@ -128,10 +129,19 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
         };
     }
 
-    public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null)
+    public async Task<List<TEntity>> GetAllAsync( Expression<Func<TEntity, bool>>? predicate = null, bool asNoTracking = false)
     {
-        return await dbSet.ToListAsync();
+        IQueryable<TEntity> query = dbSet;
+
+        if (asNoTracking)
+            query = query.AsNoTracking();
+
+        if (predicate != null)
+            query = query.Where(predicate);
+
+        return await query.ToListAsync();
     }
+
 
     public async Task<List<TResult>> SelectAsync<TResult>(Expression<Func<TEntity, bool>>? predicate, Expression<Func<TEntity, TResult>> selector)
     {

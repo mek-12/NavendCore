@@ -7,7 +7,7 @@ public interface IRepository<TEntity, in TKey> : IRepository where TEntity : cla
 {
     Task<TEntity?> GetAsync(TKey id);
     Task<TEntity?> GetAsync(Expression<Func<TEntity, bool>> predicate);
-    Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null);
+    Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null, bool asNoTracking = false);
     Task AddAsync(TEntity entity);
     Task AddRangeAsync(List<TEntity> entities, bool saveChanges = true);
     Task UpdateAsync(TEntity entity);
