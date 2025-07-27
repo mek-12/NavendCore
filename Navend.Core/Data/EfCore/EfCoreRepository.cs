@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,10 +20,11 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task AddRangeAsync(List<TEntity> entities)
+    public async Task AddRangeAsync(List<TEntity> entities, bool saveChanges = true)
     {
         await dbSet.AddRangeAsync(entities);
-        await dbContext.SaveChangesAsync();
+        if (saveChanges)
+            await dbContext.SaveChangesAsync();
     }
 
     public IQueryable<TEntity> AsQueryable()
@@ -139,5 +141,32 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
             query = query.Where(predicate);
 
         return await query.Select(selector).ToListAsync();
+    }
+
+    public async Task BulkInsertAsync(ConcurrentBag<TEntity> entities, int batchSize = 1000, bool clearTracker = true, CancellationToken cancellationToken = default)
+    {
+        var buffer = new List<TEntity>();
+
+        while (entities.TryTake(out var item))
+        {
+            buffer.Add(item);
+
+            if (buffer.Count >= batchSize)
+            {
+                await UpsertRangeAsync(buffer);
+                if (clearTracker)
+                    dbContext.ChangeTracker.Clear();
+                buffer.Clear();
+            }
+        }
+
+        if (buffer.Any())
+        {
+            await UpsertRangeAsync(buffer);
+            if (clearTracker)
+                dbContext.ChangeTracker.Clear();
+        }
+        if (!clearTracker)
+            dbContext.ChangeTracker.Clear();
     }
 }

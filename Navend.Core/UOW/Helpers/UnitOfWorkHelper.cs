@@ -5,7 +5,7 @@ namespace Navend.Core.UOW.Helper;
 
 public static class UnitOfWorkHelper {
     public static bool IsUnitOfWorkEnabled(Type type){
-        var decorator =  type.GetCustomAttribute<DecoratorAttribute>();
+        var decorator =  type.GetCustomAttribute<UOWAttribute>();
         if(decorator is null) return true;
 
         return decorator.IsUowEnabled;

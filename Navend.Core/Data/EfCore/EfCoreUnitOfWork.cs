@@ -14,11 +14,17 @@ public class EfCoreUnitOfWork<TContext>: IUnitOfWork where TContext : DbContext 
         Context = context;
     }
 
-    public void CommitTransaction() => Transaction?.Commit();
+    public void CommitTransaction()
+    {
+        Transaction?.Commit();
+        Context.ChangeTracker.Clear();
+    }
 
     public async Task CommitTransactionAsync() {
-        if (Transaction is not null) {
-            await Transaction.RollbackAsync();
+        if (Transaction is not null)
+        {
+            await Transaction.CommitAsync();
+            Context.ChangeTracker.Clear();
         }
     }
 

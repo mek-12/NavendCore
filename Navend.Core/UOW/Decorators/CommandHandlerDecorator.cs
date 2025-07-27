@@ -4,7 +4,7 @@ using Navend.Core.UOW.Helper;
 
 namespace Navend.Core.UOW.Decorator;
 
-[Decorator]
+[UOW]
 public class CommandHandlerDecorator<TCommand> : ICommandHandler<TCommand> where TCommand : ICommand {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICommandHandler<TCommand> _commandHandler;

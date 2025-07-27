@@ -29,7 +29,7 @@ public static class Extensions {
         var registrations = assemblies
             .SelectMany(a => a.DefinedTypes)
             .Where(t => t.IsClass && !t.IsAbstract)
-            .Where(t => !t.IsDefined(typeof(DecoratorAttribute), true))
+            .Where(t => !t.IsDefined(typeof(UOWAttribute), true))
             .SelectMany(t => t.ImplementedInterfaces
                 .Where(i => i.IsGenericType &&
                             i.GetGenericTypeDefinition() == type)

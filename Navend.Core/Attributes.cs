@@ -1,12 +1,12 @@
 namespace Navend.Core.Attributes;
 
-public class DecoratorAttribute : Attribute {
+public class UOWAttribute : Attribute {
     public bool IsUowEnabled { get; private set; } = true;
-    public DecoratorAttribute(bool? isUowEnable): base() {
+    public UOWAttribute(bool? isUowEnable): base() {
         if(isUowEnable.HasValue){
             IsUowEnabled = isUowEnable.Value;
         }
     }
 
-    public DecoratorAttribute():base() {}
+    public UOWAttribute():base() {}
  }

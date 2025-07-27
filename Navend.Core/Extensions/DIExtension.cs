@@ -33,7 +33,7 @@ public static class DIExtension
         if (!openDecoratorType.IsGenericTypeDefinition)
             throw new ArgumentException("openDecoratorType must be a generic type definition");
 
-        if (!openDecoratorType.GetCustomAttributes(typeof(DecoratorAttribute), true).Any())
+        if (!openDecoratorType.GetCustomAttributes(typeof(UOWAttribute), true).Any())
             throw new InvalidOperationException($"{openDecoratorType.Name} must be annotated with [Decorator] attribute.");
 
         // Tüm assembly'leri tara
@@ -50,7 +50,7 @@ public static class DIExtension
             .Where(t => t.IsClass && !t.IsAbstract)
             .Where(t => t.GetInterfaces()
                 .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == openInterfaceType))
-            .Where(t => !t.GetCustomAttributes(typeof(DecoratorAttribute), true).Any())
+            .Where(t => !t.GetCustomAttributes(typeof(UOWAttribute), true).Any())
             .ToList();
 
         if (!handlerTypes.Any())
