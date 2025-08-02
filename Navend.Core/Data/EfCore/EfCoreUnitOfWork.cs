@@ -18,6 +18,8 @@ public class EfCoreUnitOfWork<TContext>: IUnitOfWork where TContext : DbContext 
     {
         Transaction?.Commit();
         Context.ChangeTracker.Clear();
+        Transaction?.Dispose();
+        Transaction = null;
     }
 
     public async Task CommitTransactionAsync() {
@@ -25,20 +27,30 @@ public class EfCoreUnitOfWork<TContext>: IUnitOfWork where TContext : DbContext 
         {
             await Transaction.CommitAsync();
             Context.ChangeTracker.Clear();
+            Transaction.Dispose(); // Kaynağı serbest bırak
+            Transaction = null;
         }
     }
 
     public void Dispose() => Transaction?.Dispose();
 
-    public void RollbackTransaction() => Transaction?.Rollback();
+    public void RollbackTransaction()
+    {
+        Transaction?.Rollback();
+        Transaction?.Dispose();
+        Transaction = null;
+    } 
 
     public async Task RollbackTransactionAsync() {
-        if (Transaction is not null) { 
+        if (Transaction is not null)
+        {
             await Transaction.RollbackAsync();
+            Transaction.Dispose();
+            Transaction = null;
         }
     }
 
-    public void StartTransaction() => Transaction = Context.Database.BeginTransaction();
+    public void StartTransaction() => Transaction = Transaction is null ? Context.Database.BeginTransaction() : Transaction;
 
     public async Task StartTransactionAsync() {
         if (Context is not null) {

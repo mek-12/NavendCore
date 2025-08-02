@@ -1,17 +1,19 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
+using Navend.Core.Attributes;
 using Navend.Core.Step.Abstract;
 using Navend.Core.Step.Concrete;
+using Navend.Core.UOW.Decorators;
 
 namespace Navend.Core.Step;
 
 public static class Extensions
 {
-    public static IServiceCollection AddSteps(this IServiceCollection services)
+    public static IServiceCollection AddStepDecorator(this IServiceCollection services)
     {
         var stepInterfaceType = typeof(IStep<>);
         var stepContextBaseType = typeof(StepContext);
+        var openDecoratorType = typeof(StepDecorator<>);
 
         var executingAssembly = Assembly.GetEntryAssembly();
         var fullName = executingAssembly?.FullName;
@@ -39,6 +41,7 @@ public static class Extensions
 
             var stepTypes = types
                 .Where(t => !t.IsAbstract && !t.IsInterface)
+                .Where(t => !t.GetCustomAttributes(typeof(DecoratorAttribute), true).Any())
                 .SelectMany(t =>
                     t.GetInterfaces()
                         .Where(i => i.IsGenericType &&
@@ -60,7 +63,26 @@ public static class Extensions
                 }
                 foreach (var pair in stepTypes)
                 {
-                    services.AddScoped(pair.Service, pair.Implementation);
+                    var genericArguments = pair.Service.GetGenericArguments();
+                    var closedDecoratorType = openDecoratorType.MakeGenericType(genericArguments);
+
+                    services.AddScoped(pair.Implementation);
+                    services.AddScoped(pair.Service, sp =>
+                    {
+                        var inner = sp.GetRequiredService(pair.Implementation);
+                        var orderProp = inner.GetType().GetProperty("Order");
+                        object? orderValue = orderProp?.GetValue(inner);
+                        int order = orderValue is int o ? o : 0;
+
+                        var decorator = ActivatorUtilities.CreateInstance(sp, closedDecoratorType, inner);
+                        var setOrderMethod = decorator.GetType().GetMethod("SetOrder", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                        if (setOrderMethod != null)
+                        {
+                            setOrderMethod.Invoke(decorator, new object[] { order });
+                        }
+
+                        return decorator;
+                    });
                 }
             }
         }
