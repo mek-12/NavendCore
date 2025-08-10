@@ -129,18 +129,19 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
         };
     }
 
-    public async Task<List<TEntity>> GetAllAsync( Expression<Func<TEntity, bool>>? predicate = null, bool asNoTracking = false)
+    public async Task<List<TEntity>> GetAllAsync( Expression<Func<TEntity, bool>>? predicate = null, bool asNoTracking = false, int? take = null)
     {
         IQueryable<TEntity> query = AsQueryable(asNoTracking);
 
         if (predicate != null)
             query = query.Where(predicate);
-
+        if (take.HasValue)
+            query = query.Take(take.Value);
         return await query.ToListAsync();
     }
 
 
-    public async Task<List<TResult>> SelectAsync<TResult>(Expression<Func<TEntity, bool>>? predicate, Expression<Func<TEntity, TResult>> selector, bool asNoTracking = false)
+    public async Task<List<TResult>> SelectAsync<TResult>(Expression<Func<TEntity, bool>>? predicate, Expression<Func<TEntity, TResult>> selector, bool asNoTracking = false, int? take = null)
     {
         IQueryable<TEntity> query = AsQueryable(asNoTracking);
 
