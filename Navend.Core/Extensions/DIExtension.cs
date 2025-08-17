@@ -1,17 +1,99 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Navend.Core.Attributes;
+using Navend.Core.Caching.Abstract;
+using Navend.Core.Caching.Concrete;
+using Navend.Core.Constants;
 using Navend.Core.CQRS;
 using Navend.Core.Data.EfCore;
 using Navend.Core.Step;
 using Navend.Core.UOW;
 using Navend.Core.UOW.Decorator;
+using StackExchange.Redis;
 
 namespace Navend.Core.Extensions;
 
 public static class DIExtension
 {
+    #region Cache
+    public static void AddCaches(this IServiceCollection services, IConfiguration configuration, CacheTypes cacheTypes, params Assembly[] assemblies)
+    {
+        if (CacheTypes.InMemeory == cacheTypes)
+        {
+            services.AddInMemoryCaches(assemblies);
+            services.AddHostedService<CacheWarmUpHostedService>();
+        }
+        if (CacheTypes.Redis == cacheTypes)
+        {
+            services.AddRedisCache<object>(configuration);
+            return;
+        }
+    }
+
+    private static void AddInMemoryCaches(this IServiceCollection services, Assembly[] assemblies)
+    {
+        // Mevcut assembly'deki tüm sınıfları al.
+        List<Type?> cacheServices = new List<Type?>();
+        assemblies.ToList().ForEach(assembly =>
+        {
+            var _cacheServices = Assembly.GetExecutingAssembly().GetTypes()
+            // `IBaseCacheService<>` ve `ICacheWarmUpService`'i implement eden sınıfları bul
+            .Where(t => t.IsClass && !t.IsAbstract &&
+                        t.GetInterfaces().Any(i =>
+                            i.IsGenericType &&
+                            i.GetGenericTypeDefinition() == typeof(IBaseCacheService<>)) &&
+                        typeof(ICacheWarmUpService).IsAssignableFrom(t))
+            .ToList();
+            cacheServices.AddRange(_cacheServices);
+        });
+
+        foreach (var service in cacheServices)
+        {
+            // Sınıfın implement ettiği tüm interface'leri al
+            var interfaces = service?.GetInterfaces();
+
+            // Bu sınıfı, her interface ile register et (IBaseCacheService<T> ve ICacheWarmUpService)
+            if (interfaces != null)
+            {
+                foreach (var interfaceType in interfaces)
+                {
+                    if (interfaceType != typeof(ICacheWarmUpService) &&
+                       (!interfaceType.IsGenericType ||
+                         interfaceType.GetGenericTypeDefinition() != typeof(IBaseCacheService<>)) &&
+                        service is not null)
+                    {
+                        services.AddSingleton(interfaceType, service);
+                        services.AddSingleton<ICacheWarmUpService>(provider =>
+                            (ICacheWarmUpService)provider.GetRequiredService(interfaceType));
+                    }
+                }
+            }
+        }
+    }
+
+    public static IServiceCollection AddRedisCache<T>(this IServiceCollection services, IConfiguration config)
+    {
+        var options = config.GetSection("Redis").Get<RedisOptions>() ?? new RedisOptions();
+
+        var connectionString =
+            $"{options.Host}:{options.Port},defaultDatabase={options.Database}" +
+            (string.IsNullOrWhiteSpace(options.Password) ? "" : $",password={options.Password}");
+
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+            ConnectionMultiplexer.Connect(connectionString));
+
+        services.AddSingleton<IBaseCacheService<T>>(sp =>
+        {
+            var mux = sp.GetRequiredService<IConnectionMultiplexer>();
+            return new RedisCache<T>(mux, options.InstanceName);
+        });
+
+        return services;
+    }
+    #endregion
+    #region UOW
     public static IServiceCollection AddEfCoreUnitOfWork<TContext>(this IServiceCollection services, IConfiguration configuration) where TContext : DbContext
     {
         var connectionString = configuration.GetSection("ConnectionStrings")["DefaultConnection"];
@@ -21,7 +103,9 @@ public static class DIExtension
         services.AddStepDecorator();
         return services;
     }
+    #endregion
 
+    #region Decorator
     public static IServiceCollection AddOpenGenericDecorator(
         this IServiceCollection services,
         Type openInterfaceType,
@@ -78,4 +162,5 @@ public static class DIExtension
 
         return services;
     }
+    #endregion
 }
