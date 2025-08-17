@@ -20,12 +20,12 @@ public static class DIExtension
     #region Cache
     public static void AddCaches(this IServiceCollection services, IConfiguration configuration, CacheTypes cacheTypes, params Assembly[] assemblies)
     {
-        if (CacheTypes.InMemeory == cacheTypes)
+        if (cacheTypes.HasFlag(CacheTypes.InMemory))
         {
             services.AddInMemoryCaches(assemblies);
             services.AddHostedService<CacheWarmUpHostedService>();
         }
-        if (CacheTypes.Redis == cacheTypes)
+        if (cacheTypes.HasFlag(CacheTypes.Redis))
         {
             services.AddRedisCache<object>(configuration);
             return;
@@ -38,14 +38,11 @@ public static class DIExtension
         List<Type?> cacheServices = new List<Type?>();
         assemblies.ToList().ForEach(assembly =>
         {
-            var _cacheServices = Assembly.GetExecutingAssembly().GetTypes()
-            // `IBaseCacheService<>` ve `ICacheWarmUpService`'i implement eden sınıfları bul
-            .Where(t => t.IsClass && !t.IsAbstract &&
-                        t.GetInterfaces().Any(i =>
-                            i.IsGenericType &&
-                            i.GetGenericTypeDefinition() == typeof(IBaseCacheService<>)) &&
-                        typeof(ICacheWarmUpService).IsAssignableFrom(t))
-            .ToList();
+            var _cacheServices = assemblies
+                                .SelectMany(a => a.GetTypes())
+                                .Where(t => t.IsClass && !t.IsAbstract)
+                                .Where(t => IsSubclassOfRawGeneric(typeof(InMemoryCache<>), t))
+                                .ToList();
             cacheServices.AddRange(_cacheServices);
         });
 
@@ -61,7 +58,7 @@ public static class DIExtension
                 {
                     if (interfaceType != typeof(ICacheWarmUpService) &&
                        (!interfaceType.IsGenericType ||
-                         interfaceType.GetGenericTypeDefinition() != typeof(IBaseCacheService<>)) &&
+                         interfaceType.GetGenericTypeDefinition() != typeof(IBaseCache<>)) &&
                         service is not null)
                     {
                         services.AddSingleton(interfaceType, service);
@@ -72,7 +69,21 @@ public static class DIExtension
             }
         }
     }
+    private static bool IsSubclassOfRawGeneric(Type generic, Type toCheck)
+    {
+        return toCheck
+            .BaseTypes() // extension method aşağıda
+            .Any(bt => bt.IsGenericType && bt.GetGenericTypeDefinition() == generic);
+    }
 
+    // BaseType zincirini IEnumerable ile çıkaran extension
+    internal static IEnumerable<Type> BaseTypes(this Type type)
+    {
+        for (var bt = type.BaseType; bt != null && bt != typeof(object); bt = bt.BaseType)
+        {
+            yield return bt;
+        }
+    }
     public static IServiceCollection AddRedisCache<T>(this IServiceCollection services, IConfiguration config)
     {
         var options = config.GetSection("Redis").Get<RedisOptions>() ?? new RedisOptions();
@@ -84,7 +95,7 @@ public static class DIExtension
         services.AddSingleton<IConnectionMultiplexer>(_ =>
             ConnectionMultiplexer.Connect(connectionString));
 
-        services.AddSingleton<IBaseCacheService<T>>(sp =>
+        services.AddSingleton<IRedisCache<T>>(sp =>
         {
             var mux = sp.GetRequiredService<IConnectionMultiplexer>();
             return new RedisCache<T>(mux, options.InstanceName);

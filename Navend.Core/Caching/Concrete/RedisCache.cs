@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Navend.Core.Caching.Concrete;
 
-public class RedisCache<T> : IBaseCacheService<T>
+public class RedisCache<T> : IRedisCache<T>
 {
     private readonly IDatabase _db;
     private readonly string _ns;            // namespace/prefix, e.g. "yourapp:products:"

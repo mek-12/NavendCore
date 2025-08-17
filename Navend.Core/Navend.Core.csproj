@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <PackageId>Navend.Core</PackageId>
-    <Version>1.0.0-alpha.24</Version>
+    <Version>1.0.0-alpha.28</Version>
     <Authors>Muhammed Emin Karaboğa</Authors>
     <Company>Ahura Mazda</Company>
     <Description>Utils for EF Core and CQRS</Description>
@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.8.58" />
   </ItemGroup>
 

@@ -1,6 +1,6 @@
 namespace Navend.Core.Caching.Abstract;
 
-public interface IBaseCacheService<T>
+public interface IBaseCache<T>
 {
     T? Get(string key);
     Task<T?> GetAsync(string key);
