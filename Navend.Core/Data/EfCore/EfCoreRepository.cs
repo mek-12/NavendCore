@@ -160,6 +160,8 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
 
         if (predicate != null)
             query = query.Where(predicate);
+        if (take.HasValue)
+            query = query.Take(take.Value);
 
         return await query.Select(selector).ToListAsync();
     }
