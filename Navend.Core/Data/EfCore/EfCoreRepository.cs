@@ -69,6 +69,19 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task UpdatePropertiesAsync(TEntity entity, params Expression<Func<TEntity, object>>[] updatedProperties)
+    {
+        // EF'ye bu entity'nin zaten var olduğunu bildir (Tracking başlatılır)
+        dbContext.Set<TEntity>().Attach(entity);
+
+        // Sadece belirtilen property'leri değişmiş olarak işaretle
+        foreach (var property in updatedProperties)
+        {
+            dbContext.Entry(entity).Property(property).IsModified = true;
+        }
+        await dbContext.SaveChangesAsync();
+    }
+
     public async Task UpsertRangeAsync(List<TEntity> entities)
     {
         if (entities == null || entities.Count == 0)

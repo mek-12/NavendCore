@@ -13,6 +13,7 @@ public interface IRepository<TEntity, in TKey> : IRepository where TEntity : cla
     Task AddAsync(TEntity entity);
     Task AddRangeAsync(List<TEntity> entities, bool saveChanges = true);
     Task UpdateAsync(TEntity entity);
+    Task UpdatePropertiesAsync(TEntity entity, params Expression<Func<TEntity, object>>[] updatedProperties);
     Task UpdateRangeAsync(IEnumerable<TEntity> entities);
     Task UpsertRangeAsync(List<TEntity> entities);
     Task UpdatePartialAsync(TKey id, Expression<Func<TEntity, object>> propertySelector, object newValue);
