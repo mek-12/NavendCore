@@ -11,11 +11,20 @@ If you haven't defined a local NuGet source before, add it using the command bel
 ```bash
 dotnet nuget add source ~/.nuget/nuget-local --name Local
 ```
+For Windows:
+```bash
+dotnet nuget add source $HOME\.nuget\nuget-local\ --name Local
+```
 
 Then copy the generated NuGet package to the local source:
 
 ```bash
 cp ./Navend.Core/bin/Release/*.nupkg ~/.nuget/nuget-local/
+```
+For Windows:
+```bash
+New-Item -ItemType Directory -Force -Path "$HOME\.nuget\nuget-local"
+Copy-Item -Path .\Navend.Core\bin\Release\*.nupkg -Destination "$HOME\.nuget\nuget-local"
 ```
 
 Now you can use the new version of the `Navend.Core` package as a local reference in your projects.
