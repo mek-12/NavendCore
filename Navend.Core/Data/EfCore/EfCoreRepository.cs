@@ -45,6 +45,11 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, bool asNoTracking = true)
+    {
+        return await AsQueryable(asNoTracking).AnyAsync(predicate);
+    }
+
     public async Task<TEntity?> GetAsync(TKey id)
     {
         // TODO: We can use NolockDbContext for this method. 
