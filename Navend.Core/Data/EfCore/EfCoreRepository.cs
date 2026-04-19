@@ -1,6 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Navend.Core.Data.EfCore;
 
@@ -54,12 +55,16 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
     {
         // TODO: We can use NolockDbContext for this method. 
         // Once I add the Navend.Core library, I will be able to use this idea.
-        return await dbSet.FindAsync(id);
+         return await dbSet.FindAsync(id);
     }
 
     public async Task<TEntity?> GetAsync(Expression<Func<TEntity, bool>> predicate)
     {
-        return await dbSet.FindAsync(predicate);
+        IQueryable<TEntity> query = AsQueryable();
+        if (predicate != null)
+            query = query.Where(predicate);
+
+        return await query.FirstOrDefaultAsync();
     }
 
     public async Task<int> GetCountAsync(Expression<Func<TEntity, bool>> predicate)
@@ -147,7 +152,7 @@ public class EfCoreRepository<TEntity, TKey> : IRepository<TEntity, TKey> where 
         };
     }
 
-    public async Task<List<TEntity>> GetAllAsync( Expression<Func<TEntity, bool>>? predicate = null, bool asNoTracking = false, int? take = null)
+    public async Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null, bool asNoTracking = false, int? take = null)
     {
         IQueryable<TEntity> query = AsQueryable(asNoTracking);
 
